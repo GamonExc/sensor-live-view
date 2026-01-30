@@ -2,7 +2,7 @@
   "expo": {
     "name": "Excello Ts App",
     "slug": "SensorApp",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/ts_app_icon.png",
     "scheme": "sensorapp",
@@ -34,11 +34,12 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/excello-logo.png",
-          "imageWidth": 200,
+          "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#040000",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#ffffff",
+            "image": "./assets/images/excello-logo-black.png"
           }
         }
       ]
