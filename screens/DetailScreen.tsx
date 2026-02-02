@@ -41,17 +41,17 @@ export function DetailScreen({
     return () => clearInterval(interval)
   }, [isDanger])
 
-  // 색상 결정: 위험 상태일 땐 깜빡임(빨강 <-> 투명/흰색), 아니면 고정(초록/흰색)
+  // 색상 결정: 위험 상태일 땐 깜빡임(빨강 <-> 노랑), 아니면 고정(초록/흰색)
   const statusColor = isDanger
     ? isBlinkOn
       ? '#FF0000'
-      : 'transparent' // 깜빡일 때 꺼짐 색상
+      : '#FFFF00'
     : '#4CAF50'
 
   const textColor = isDanger
     ? isBlinkOn
       ? '#FF0000'
-      : '#333333' // 깜빡일 때 꺼짐 색상 (배경이랑 대비되게, 혹은 투명)
+      : '#FFFF00'
     : '#ffffff'
 
   const statusText = isDanger ? '위험' : '안전'
