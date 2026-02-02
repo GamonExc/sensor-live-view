@@ -1,12 +1,14 @@
 import { FONT_FAMILY, FONT_FAMILY_BOLD } from '@/constants/theme'
-import type { BluetoothDeviceLike } from '@/hooks/useBluetooth'
-import React from 'react'
+import type {
+  BluetoothDeviceLike
+} from '@/hooks/useBluetooth'
+import React, { useState } from 'react'
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 
 export interface DeviceListScreenProps {
@@ -26,9 +28,25 @@ export function DeviceListScreen({
   onSelectDevice,
   onDevBypass,
 }: DeviceListScreenProps) {
+  const [headerClickCount, setHeaderClickCount] = useState(0)
+
+  const handleHeaderPress = () => {
+    // 개발 모드이고 onDevBypass가 있을 때만 동작
+    if (typeof __DEV__ !== 'undefined' && __DEV__ && onDevBypass) {
+      const next = headerClickCount + 1
+      setHeaderClickCount(next)
+      if (next >= 7) {
+        setHeaderClickCount(0)
+        onDevBypass()
+      }
+    }
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>기기 선택</Text>
+      <TouchableOpacity activeOpacity={1} onPress={handleHeaderPress}>
+        <Text style={styles.header}>기기 선택</Text>
+      </TouchableOpacity>
       <Text style={styles.desc}>블루투스 기기를 선택하여 연결하세요.</Text>
       
       <TouchableOpacity 
@@ -130,6 +148,14 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY_BOLD,
     fontSize: 16,
   },
+  devBypassBtn: {
+    backgroundColor: '#ff9800',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+  devBypassText: { color: '#fff', fontFamily: FONT_FAMILY_BOLD, fontSize: 14 },
   sectionHeader: {
     marginTop: 20,
     marginBottom: 10,

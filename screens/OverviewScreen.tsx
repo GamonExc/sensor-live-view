@@ -42,7 +42,7 @@ function useOverviewSizes() {
   const boxSizeByWidth = availableWidthForCircle
   const boxSize = Math.min(boxSizeByMinSide, boxSizeByHeight, boxSizeByWidth)
   const orbitRadius = boxSize * 0.36
-  const smallR = Math.max(10, boxSize * 0.025)
+  const smallR = Math.max(12, boxSize * 0.035)
   const centerSize = boxSize * 0.6
   const cx = boxSize / 2
   const cy = boxSize / 2
@@ -93,7 +93,11 @@ export function OverviewScreen({
         POSCO 광양{'\n'}2고로 송풍지관
       </Text>
 
-      <View style={[styles.circleBox, { width: boxSize, height: boxSize }]}>
+      <TouchableOpacity
+        style={[styles.circleBox, { width: boxSize, height: boxSize }]}
+        onPress={() => onPressNumber(15)}
+        activeOpacity={1}
+      >
         <View
           style={[
             styles.centerCircle,
@@ -119,18 +123,18 @@ export function OverviewScreen({
           boxSize={boxSize}
           orbitRadius={orbitRadius}
           smallR={smallR}
-          circleCount={42}
+          circleCount={30}
           clickableNumbers={[15]}
           onPressNumber={onPressNumber}
-          fontSize={Math.max(10, Math.round(smallR * 0.65))}
+          fontSize={Math.max(12, Math.round(smallR * 0.65))}
           getCircleColor={(num) => {
             if (num === 15) return '#FF0000'
-            if ([3, 5, 14, 22, 31, 33, 36, 40, 41, 42].includes(num))
+            if ([3, 5, 14, 22].includes(num))
               return '#FFFF00'
             return '#00A5E5'
           }}
         />
-      </View>
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.logoWrap}
         onPress={handleLogoPress}

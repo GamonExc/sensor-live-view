@@ -43,53 +43,37 @@ export function DashboardScreen({
   }
 
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={true}
-    >
-      <View style={styles.managementCard}>
-        <Text style={styles.subHeader}>관리값 (°C)</Text>
-        <View style={styles.managementRow}>
-          <TextInput
-            style={styles.managementInput}
-            value={editValue}
-            onChangeText={setEditValue}
-            keyboardType="number-pad"
-            placeholder="70"
-          />
-          <Button title="저장" onPress={handleSaveManagement} />
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.managementCard}>
+          <Text style={styles.subHeader}>관리값 (°C)</Text>
+          <View style={styles.managementRow}>
+            <TextInput
+              style={styles.managementInput}
+              value={editValue}
+              onChangeText={setEditValue}
+              keyboardType="number-pad"
+              placeholder="70"
+            />
+            <Button title="저장" onPress={handleSaveManagement} />
+          </View>
+          <Text style={styles.managementCurrent}>
+            현재 저장된 값: {managementValue} °C
+          </Text>
         </View>
-        <Text style={styles.managementCurrent}>
-          현재 저장된 값: {managementValue} °C
-        </Text>
-      </View>
-      <Text style={styles.header}>실시간 데이터</Text>
-      <View style={styles.card}>
-        <Text>
-          Site ID: <Text style={styles.bold}>{sensorData.siteId}</Text>
-        </Text>
-        <Text>
-          Dev ID: <Text style={styles.bold}>{sensorData.devId}</Text>
-        </Text>
-        <Text>
-          Msg ID: <Text style={styles.bold}>{sensorData.msgId}</Text>
-        </Text>
-        <Text>Time: {sensorData.time}</Text>
-      </View>
-      <Text style={styles.subHeader}>센서 8ch:</Text>
-      <View style={styles.grid}>
-        {sensorData.sensorCh.length > 0 ? (
-          sensorData.sensorCh.map((val, idx) => (
-            <View key={idx} style={styles.box}>
-              <Text style={styles.valText}>{val}</Text>
-              <Text style={styles.idxText}>CH{idx + 1}</Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.hint}>데이터 수신 대기 중...</Text>
-        )}
-      </View>
+        <Text style={styles.header}>실시간 데이터</Text>
+        <View style={styles.card}>
+          <Text>
+            Site ID: <Text style={styles.bold}>{sensorData.siteId}</Text>
+          </Text>
+          <Text>
+            Dev ID: <Text style={styles.bold}>{sensorData.devId}</Text>
+          </Text>
+          <Text>
+            Msg ID: <Text style={styles.bold}>{sensorData.msgId}</Text>
+          </Text>
+          <Text>Time: {sensorData.time}</Text>
+        </View>
       <View style={styles.card}>
         <Text style={styles.subHeader}>NTC / LTE / 배터리 / 기타</Text>
         <Text>
@@ -123,9 +107,9 @@ export function DashboardScreen({
           </Text>
         </View>
       )}
-      <View style={styles.logSection}>
+      <View style={[styles.logSection, { flex: 1 }]}>
         <Text style={styles.subHeader}>수신 로그 (최근 10개):</Text>
-        <View style={styles.logBox}>
+        <ScrollView style={styles.logBox} nestedScrollEnabled={true}>
           {rawDataLog.length > 0 ? (
             rawDataLog.map((log, idx) => (
               <Text key={idx} style={styles.logText}>
@@ -135,20 +119,21 @@ export function DashboardScreen({
           ) : (
             <Text style={styles.hint}>아직 수신된 데이터가 없습니다.</Text>
           )}
-        </View>
+        </ScrollView>
       </View>
       <View style={styles.actions}>
         {onBack && <Button title="뒤로" onPress={onBack} />}
         <View style={styles.actionSpacer} />
         <Button title="연결 해제" color="red" onPress={onDisconnect} />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
+  container: { flex: 1, padding: 20 },
+  scrollContent: { paddingBottom: 40 },
   header: {
     fontSize: 22,
     fontFamily: FONT_FAMILY_BOLD,
@@ -166,23 +151,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     elevation: 2,
+    marginBottom: 20,
   },
   bold: { fontFamily: FONT_FAMILY_BOLD },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  box: {
-    width: '30%',
-    backgroundColor: '#e0e0e0',
-    padding: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-    borderRadius: 5,
-  },
-  valText: { fontSize: 16, fontFamily: FONT_FAMILY_BOLD, color: 'blue' },
-  idxText: { fontSize: 12, fontFamily: FONT_FAMILY, color: '#555' },
   parseFailCard: {
     backgroundColor: '#4a1515',
     padding: 12,
@@ -208,18 +179,18 @@ const styles = StyleSheet.create({
     color: '#90caf9',
     fontSize: 10,
   },
-  logSection: { marginTop: 20 },
+  logSection: { marginTop: 20, minHeight: 200 },
   logBox: {
     backgroundColor: '#1e1e1e',
     padding: 10,
     borderRadius: 5,
-    maxHeight: 150,
+    maxHeight: 300,
   },
   logText: {
     color: '#0f0',
     fontFamily: FONT_FAMILY,
     fontSize: 12,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   hint: {
     fontSize: 14,
@@ -227,7 +198,7 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
-  actions: { marginTop: 20 },
+  actions: { marginTop: 20, marginBottom: 40 },
   actionSpacer: { marginTop: 8 },
   managementCard: {
     backgroundColor: '#1a237e',
@@ -236,11 +207,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#00A5E5',
-  },
-  managementHint: {
-    fontSize: 12,
-    color: '#b0bec5',
-    marginBottom: 10,
   },
   managementRow: {
     flexDirection: 'row',

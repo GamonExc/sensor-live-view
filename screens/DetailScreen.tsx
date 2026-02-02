@@ -1,6 +1,6 @@
 import { FONT_FAMILY_BOLD } from '@/constants/theme'
 import type { SensorData } from '@/types/sensor'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, StyleSheet, Text, View } from 'react-native'
 
 const INSTALL_DATE_FIXED = '2026-01-16'
@@ -18,6 +18,8 @@ export function DetailScreen({
   managementValue = 70,
   onBack,
 }: DetailScreenProps) {
+  const [isBlinkOn, setIsBlinkOn] = useState(true)
+
   const ch1Raw = sensorData.sensorCh.length > 0 ? sensorData.sensorCh[0] : ''
   const ch1Num = typeof ch1Raw === 'string' ? parseFloat(ch1Raw) : NaN
   const hasValue = !Number.isNaN(ch1Num) && ch1Raw !== ''
@@ -25,8 +27,33 @@ export function DetailScreen({
     ? String(Math.round(ch1Num)).padStart(3, '0').slice(-3)
     : '---'
   const digits = digitsDisplay.split('')
-  const isDanger = hasValue && ch1Num > managementValue
-  const statusColor = isDanger ? '#FF0000' : '#4CAF50'
+  const isDanger = hasValue && ch1Num >= managementValue
+
+  // 점멸 효과 로직
+  useEffect(() => {
+    if (!isDanger) {
+      setIsBlinkOn(true) // 위험 아닐 땐 항상 켜둠
+      return
+    }
+    const interval = setInterval(() => {
+      setIsBlinkOn((prev) => !prev)
+    }, 500)
+    return () => clearInterval(interval)
+  }, [isDanger])
+
+  // 색상 결정: 위험 상태일 땐 깜빡임(빨강 <-> 투명/흰색), 아니면 고정(초록/흰색)
+  const statusColor = isDanger
+    ? isBlinkOn
+      ? '#FF0000'
+      : 'transparent' // 깜빡일 때 꺼짐 색상
+    : '#4CAF50'
+
+  const textColor = isDanger
+    ? isBlinkOn
+      ? '#FF0000'
+      : '#333333' // 깜빡일 때 꺼짐 색상 (배경이랑 대비되게, 혹은 투명)
+    : '#ffffff'
+
   const statusText = isDanger ? '위험' : '안전'
 
   return (
@@ -38,7 +65,9 @@ export function DetailScreen({
         <View style={styles.digitRow}>
           {digits.map((char, index) => (
             <View key={index} style={styles.digitCell}>
-              <Text style={styles.digitalText}>{char}</Text>
+              <Text style={[styles.digitalText, { color: textColor }]}>
+                {char}
+              </Text>
             </View>
           ))}
         </View>
