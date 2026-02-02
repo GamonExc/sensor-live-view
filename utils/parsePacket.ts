@@ -9,53 +9,43 @@ export function hexToDecimal(hexValue: string): string {
 }
 
 /**
- * 프로토콜 파싱: #site_id,dev_id,msg_id;time,센서8ch,NTC내기,NTC외기,LTE,배터리,RESETFLAG,COUNT
- * #로 시작하고 ;가 있으면 파싱 시도 (앞뒤 잡음 무시)
+ * 프로토콜 파싱: ADD: 15 TEMP: 19
+ * ADD는 무시, TEMP 값을 sensorCh[0]에 할당
  */
 export function parsePacket(packet: string): Partial<SensorData> | null {
   const trimmed = packet.trim()
-  const hashIdx = trimmed.indexOf('#')
-  if (hashIdx < 0 || !trimmed.includes(';')) return null
-  const content = trimmed.substring(hashIdx + 1)
-  const [headerPart, bodyPart] = content.split(';')
-  if (!headerPart || !bodyPart) return null
 
-  try {
-    const headers = headerPart.split(',')
-    const bodies = bodyPart.split(',')
+  // 새로운 포맷: ADD: 15 TEMP: 19 (대소문자 무관하게 처리)
+  // \s* : 공백 0개 이상 허용
+  const regex = /ADD:\s*(\d+)\s+TEMP:\s*(\d+)/i
+  const match = trimmed.match(regex)
 
-    const timeHex = (bodies[0] || '').trim()
-    const timestamp = parseInt(timeHex, 16)
-    const timeStr =
-      isNaN(timestamp) || timestamp === 0
-        ? timeHex
-        : new Date(timestamp * 1000).toLocaleString()
+  if (match) {
+    // match[1] -> ADD 값 (사용 안 함)
+    // match[2] -> TEMP 값
+    const tempValue = match[2]
 
-    const sensorCh = bodies
-      .slice(1, 9)
-      .map((v) => hexToDecimal((v || '').trim()))
-    while (sensorCh.length < 8) sensorCh.push('-')
-    const ntcIn = hexToDecimal((bodies[9] ?? '-').trim())
-    const ntcOut = hexToDecimal((bodies[10] ?? '-').trim())
-    const lte = hexToDecimal((bodies[11] ?? '-').trim())
-    const battery = hexToDecimal((bodies[12] ?? '-').trim())
-    const resetFlag = hexToDecimal((bodies[13] ?? '-').trim())
-    const count = hexToDecimal((bodies[14] ?? '-').trim())
+    // sensorCh 배열 초기화 (8개)
+    const sensorCh = Array(8).fill('-')
+    // 첫 번째 채널에 TEMP 값 할당
+    sensorCh[0] = tempValue
 
     return {
-      siteId: (headers[0] ?? '-').trim(),
-      devId: (headers[1] ?? '-').trim(),
-      msgId: (headers[2] ?? '-').trim(),
-      time: timeStr,
+      siteId: '-',
+      devId: '-',
+      msgId: '-',
+      time: new Date().toLocaleString(), // 시간 정보가 없으므로 현재 시간 사용
       sensorCh,
-      ntcIn,
-      ntcOut,
-      lte,
-      battery,
-      resetFlag,
-      count,
+      ntcIn: '-',
+      ntcOut: '-',
+      lte: '-',
+      battery: '-',
+      resetFlag: '-',
+      count: '-',
     }
-  } catch {
-    return null
   }
+
+  // 기존 포맷 (#로 시작) 처리 로직은 제거됨 (사용자 요청)
+
+  return null
 }

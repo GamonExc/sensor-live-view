@@ -2,15 +2,17 @@ import { FONT_FAMILY, FONT_FAMILY_BOLD } from '@/constants/theme'
 import type { BluetoothDeviceLike } from '@/hooks/useBluetooth'
 import React from 'react'
 import {
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native'
 
 export interface DeviceListScreenProps {
   deviceList: BluetoothDeviceLike[]
+  unpairedDevices: BluetoothDeviceLike[]
+  isScanning: boolean
   onRefresh: () => void
   onSelectDevice: (device: BluetoothDeviceLike) => void
   onDevBypass?: () => void
@@ -18,6 +20,8 @@ export interface DeviceListScreenProps {
 
 export function DeviceListScreen({
   deviceList,
+  unpairedDevices,
+  isScanning,
   onRefresh,
   onSelectDevice,
   onDevBypass,
@@ -25,33 +29,64 @@ export function DeviceListScreen({
   return (
     <View style={styles.container}>
       <Text style={styles.header}>기기 선택</Text>
-      <Text style={styles.desc}>블루투스 설정에서 먼저 페어링 해주세요.</Text>
-      <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
-        <Text style={styles.refreshBtnText}>목록 새로고침</Text>
+      <Text style={styles.desc}>블루투스 기기를 선택하여 연결하세요.</Text>
+      
+      <TouchableOpacity 
+        style={[styles.refreshBtn, isScanning && styles.scanningBtn]} 
+        onPress={onRefresh}
+        disabled={isScanning}
+      >
+        <Text style={styles.refreshBtnText}>
+          {isScanning ? '검색 중...' : '기기 검색 (새로고침)'}
+        </Text>
       </TouchableOpacity>
-      {/* 테스트용 이동 (연결 없이) - 배포 시 비노출
-      {typeof __DEV__ !== 'undefined' && __DEV__ && onDevBypass && (
-        <TouchableOpacity style={styles.devBypassBtn} onPress={onDevBypass}>
-          <Text style={styles.devBypassText}>테스트용 이동 (연결 없이)</Text>
-        </TouchableOpacity>
-      )}
-      */}
+
       <FlatList
-        data={deviceList}
-        keyExtractor={(item) => item.address}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => onSelectDevice(item)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemAddress}>{item.address}</Text>
-          </TouchableOpacity>
-        )}
-        style={styles.list}
-        ListEmptyComponent={
-          <Text style={styles.emptyHint}>페어링된 기기가 없습니다.</Text>
+        data={[]}
+        renderItem={null}
+        ListHeaderComponent={
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>등록된 기기</Text>
+            </View>
+            {deviceList.length === 0 ? (
+              <Text style={styles.emptyHint}>등록된 기기가 없습니다.</Text>
+            ) : (
+              deviceList.map((item) => (
+                <TouchableOpacity
+                  key={item.address}
+                  style={styles.item}
+                  onPress={() => onSelectDevice(item)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.itemName}>{item.name || '알 수 없는 기기'}</Text>
+                  <Text style={styles.itemAddress}>{item.address}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>검색된 기기</Text>
+            </View>
+            {unpairedDevices.length === 0 ? (
+              <Text style={styles.emptyHint}>
+                {isScanning ? '검색 중입니다...' : '검색된 기기가 없습니다.'}
+              </Text>
+            ) : (
+              unpairedDevices.map((item) => (
+                <TouchableOpacity
+                  key={item.address}
+                  style={[styles.item, styles.unpairedItem]}
+                  onPress={() => onSelectDevice(item)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.itemName}>{item.name || '알 수 없는 기기'}</Text>
+                  <Text style={styles.itemAddress}>{item.address}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+            <View style={{ height: 40 }} />
+          </>
         }
       />
     </View>
@@ -82,25 +117,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#00A5E5',
+  },
+  scanningBtn: {
+    backgroundColor: '#0D47A1',
+    opacity: 0.8,
   },
   refreshBtnText: {
     color: '#ffffff',
     fontFamily: FONT_FAMILY_BOLD,
     fontSize: 16,
   },
-  /* devBypassBtn: {
-    backgroundColor: '#ff9800',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    alignItems: 'center',
+  sectionHeader: {
+    marginTop: 20,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+    paddingBottom: 5,
   },
-  devBypassText: { color: '#fff', fontFamily: FONT_FAMILY_BOLD, fontSize: 14 },
-  */
-  list: { flex: 1, marginTop: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: FONT_FAMILY_BOLD,
+    color: '#eee',
+  },
   item: {
     backgroundColor: '#0D47A1',
     padding: 16,
@@ -108,6 +149,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#00A5E5',
+  },
+  unpairedItem: {
+    backgroundColor: '#1A237E',
+    borderColor: '#304FFE',
   },
   itemName: {
     fontSize: 18,
@@ -123,8 +168,8 @@ const styles = StyleSheet.create({
   emptyHint: {
     fontSize: 14,
     fontFamily: FONT_FAMILY,
-    color: '#90caf9',
-    textAlign: 'center',
-    marginTop: 24,
+    color: '#666',
+    fontStyle: 'italic',
+    marginBottom: 10,
   },
 })

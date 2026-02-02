@@ -2,18 +2,18 @@
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useManagementValue } from '@/hooks/useManagementValue'
 import {
-  DashboardScreen,
-  DetailScreen,
-  DeviceListScreen,
-  OverviewScreen,
-  SplashScreen,
+    DashboardScreen,
+    DetailScreen,
+    DeviceListScreen,
+    OverviewScreen,
+    SplashScreen,
 } from '@/screens'
 import type { AppStep } from '@/types/sensor'
 import React, { useEffect, useState } from 'react'
 import { BackHandler, StyleSheet, View } from 'react-native'
 import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
+    SafeAreaProvider,
+    useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 
 function AppContent() {
@@ -23,11 +23,14 @@ function AppContent() {
   const [managementValue, setManagementValue] = useManagementValue()
   const {
     deviceList,
+    unpairedDevices,
+    isScanning,
     sensorData,
     rawDataLog,
     lastParseFail,
     requestPermissions,
     getBondedDevices,
+    scanDevices,
     connectDevice,
     disconnect,
   } = useBluetooth()
@@ -37,6 +40,7 @@ function AppContent() {
     const timer = setTimeout(() => {
       setCurrentStep('LIST')
       getBondedDevices().catch(() => {})
+      scanDevices().catch(() => {})
     }, 2000)
     return () => {
       clearTimeout(timer)
@@ -93,7 +97,12 @@ function AppContent() {
         {currentStep === 'LIST' && (
           <DeviceListScreen
             deviceList={deviceList}
-            onRefresh={getBondedDevices}
+            unpairedDevices={unpairedDevices}
+            isScanning={isScanning}
+            onRefresh={() => {
+              getBondedDevices()
+              scanDevices()
+            }}
             onSelectDevice={handleConnectDevice}
             onDevBypass={() => setCurrentStep('OVERVIEW')}
           />

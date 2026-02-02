@@ -36,8 +36,58 @@ POSCO 광양 2고로 송풍지관 풍구 감시용 모바일 앱. 블루투스(H
 ### 빌드
 
 - **개발 빌드(Expo Dev Client):** `npx eas build -p android --profile development`
-- **내부 배포(APK):** `npx eas build -p android --profile preview`
+- **내부 배포(APK):** `npx eas build -p android --profile preview` 
 - **버전:** `app.json`의 `version`(표시용), `android.versionCode`(정수). preview 프로필에 `autoIncrement: true` 설정으로 빌드 시 versionCode 자동 증가.
+
+## Google Play Store 배포 (AAB)
+
+### 1. eas.json 수정
+
+production 프로필에서 AAB로 빌드되도록 설정:
+
+```json
+"production": {
+  "android": {
+    "buildType": "app-bundle"
+  }
+}
+```
+
+`buildType`을 생략하면 기본값이 AAB입니다.
+
+### 2. AAB 빌드
+
+```bash
+eas build -p android --profile production
+```
+
+- Expo 로그인/권한 확인
+- 서명 키: 최초 1회 EAS가 생성, 이후 기존 키 사용
+- 빌드 완료까지 대기
+
+### 3. Google Play Console 준비
+
+1. [Google Play Console](https://play.google.com/console) 접속
+2. 새 앱 생성 또는 기존 앱 선택
+3. 앱 정보, 개인정보처리방침, 콘텐츠 등급 등 기본 설정 완료
+
+### 4. Play Store 제출
+
+```bash
+eas submit -p android --profile production --latest
+```
+
+- Play Console 앱 선택
+- 서비스 계정 JSON 또는 로그인으로 인증
+- 제출 후 Play Console에서 검토 요청
+
+### 5. Play Console 마무리
+
+- 스토어 등록정보(제목, 설명, 스크린샷 등) 입력
+- 가격 및 배포 국가 설정
+- 검토 요청 후 Google 검토 대기
+
+> **참고:** `com.anonymous.SensorApp` 패키지명은 Play Store용으로 적절하지 않을 수 있습니다. 실제 도메인 기반으로 변경 권장.
 
 ## 로컬 실행
 
