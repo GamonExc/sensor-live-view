@@ -26,4 +26,12 @@ export const INITIAL_SENSOR_DATA: SensorData = {
   count: '-',
 }
 
-export type AppStep = 'SPLASH' | 'LIST' | 'OVERVIEW' | 'DETAIL' | 'DASHBOARD'
+export type BluetoothMode = 'classic' | 'le'
+
+export type AppStep =
+  | 'SPLASH'
+  | 'MODE_SELECT'
+  | 'LIST'
+  | 'OVERVIEW'
+  | 'DETAIL'
+  | 'DASHBOARD'

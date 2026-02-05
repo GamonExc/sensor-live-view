@@ -1,54 +1,72 @@
-// @ts-nocheck
 import { useBluetooth } from '@/hooks/useBluetooth'
+import { useBluetoothLE } from '@/hooks/useBluetoothLE'
 import { useManagementValue } from '@/hooks/useManagementValue'
 import {
   DashboardScreen,
   DetailScreen,
   DeviceListScreen,
+  ModeSelectScreen,
   OverviewScreen,
   SplashScreen,
 } from '@/screens'
-import type { AppStep } from '@/types/sensor'
-import React, { useEffect, useState } from 'react'
+import type { BluetoothDeviceListItem } from '@/screens/DeviceListScreen'
+import type { AppStep, BluetoothMode } from '@/types/sensor'
+import React, { useEffect, useRef, useState } from 'react'
 import { BackHandler, StyleSheet, View } from 'react-native'
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 
+type BluetoothHook =
+  | ReturnType<typeof useBluetooth>
+  | ReturnType<typeof useBluetoothLE>
+
 function AppContent() {
   const insets = useSafeAreaInsets()
   const [currentStep, setCurrentStep] = useState<AppStep>('SPLASH')
+  const [bluetoothMode, setBluetoothMode] = useState<BluetoothMode | null>(null)
   const [selectedVentNumber, setSelectedVentNumber] = useState<number>(15)
   const [managementValue, setManagementValue] = useManagementValue()
-  const {
-    deviceList,
-    unpairedDevices,
-    isScanning,
-    isConnecting,
-    sensorData,
-    rawDataLog,
-    lastParseFail,
-    requestPermissions,
-    getBondedDevices,
-    scanDevices,
-    connectDevice,
-    disconnect,
-  } = useBluetooth()
+
+  const classic = useBluetooth()
+  const le = useBluetoothLE()
+
+  const isClassic = bluetoothMode === 'classic'
+  const bt: BluetoothHook = isClassic ? classic : le
+  const listScanDoneRef = useRef<string | null>(null)
 
   useEffect(() => {
-    requestPermissions().catch(() => {})
+    classic.requestPermissions().catch(() => {})
+    le.requestPermissions().catch(() => {})
     const timer = setTimeout(() => {
-      setCurrentStep('LIST')
-      getBondedDevices().catch(() => {})
-      scanDevices().catch(() => {})
+      setCurrentStep('MODE_SELECT')
     }, 2000)
     return () => {
       clearTimeout(timer)
-      disconnect()
+      classic.disconnect()
+      le.disconnect()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (currentStep !== 'LIST' || !bluetoothMode) return
+    const key = `${currentStep}-${bluetoothMode}`
+    if (listScanDoneRef.current === key) return
+    listScanDoneRef.current = key
+    if (bluetoothMode === 'classic') {
+      classic.getBondedDevices().catch(() => {})
+      classic.scanDevices().catch(() => {})
+    } else {
+      le.getBondedDevices().catch(() => {})
+      le.scanDevices().catch(() => {})
+    }
+    return () => {
+      listScanDoneRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, bluetoothMode])
 
   useEffect(() => {
     const onBack = () => {
@@ -57,26 +75,40 @@ function AppContent() {
         return true
       }
       if (currentStep === 'OVERVIEW') {
-        disconnect()
+        bt.disconnect()
         setCurrentStep('LIST')
         return true
       }
       if (currentStep === 'LIST') {
+        bt.disconnect()
+        setBluetoothMode(null)
+        setCurrentStep('MODE_SELECT')
+        return true
+      }
+      if (currentStep === 'MODE_SELECT') {
         return false
       }
       return false
     }
     const sub = BackHandler.addEventListener('hardwareBackPress', onBack)
     return () => sub.remove()
-  }, [currentStep, disconnect])
+  }, [currentStep, bluetoothMode, bt])
 
-  const handleConnectDevice = async (device) => {
-    const ok = await connectDevice(device)
+  const handleSelectMode = (mode: BluetoothMode) => {
+    setBluetoothMode(mode)
+    setCurrentStep('LIST')
+  }
+
+  const handleConnectDevice = async (
+    device: BluetoothDeviceListItem | null,
+  ) => {
+    if (!device?.address) return
+    const ok = await bt.connectDevice(device)
     if (ok) setCurrentStep('OVERVIEW')
   }
 
   const handleDisconnect = () => {
-    disconnect()
+    bt.disconnect()
     setCurrentStep('LIST')
   }
 
@@ -95,15 +127,24 @@ function AppContent() {
       >
         {currentStep === 'SPLASH' && <SplashScreen />}
 
-        {currentStep === 'LIST' && (
+        {currentStep === 'MODE_SELECT' && (
+          <ModeSelectScreen onSelectMode={handleSelectMode} />
+        )}
+
+        {currentStep === 'LIST' && bluetoothMode && (
           <DeviceListScreen
-            deviceList={deviceList}
-            unpairedDevices={unpairedDevices}
-            isScanning={isScanning}
-            isConnecting={isConnecting}
+            deviceList={bt.deviceList}
+            unpairedDevices={bt.unpairedDevices}
+            isScanning={bt.isScanning}
+            isConnecting={bt.isConnecting}
             onRefresh={() => {
-              getBondedDevices()
-              scanDevices()
+              if (bluetoothMode === 'classic') {
+                classic.getBondedDevices()
+                classic.scanDevices()
+              } else {
+                le.getBondedDevices()
+                le.scanDevices()
+              }
             }}
             onSelectDevice={handleConnectDevice}
             onDevBypass={() => setCurrentStep('OVERVIEW')}
@@ -123,7 +164,7 @@ function AppContent() {
 
         {currentStep === 'DETAIL' && (
           <DetailScreen
-            sensorData={sensorData}
+            sensorData={bt.sensorData}
             ventNumber={selectedVentNumber}
             managementValue={managementValue}
             onBack={() => setCurrentStep('OVERVIEW')}
@@ -133,9 +174,9 @@ function AppContent() {
 
         {currentStep === 'DASHBOARD' && (
           <DashboardScreen
-            sensorData={sensorData}
-            rawDataLog={rawDataLog}
-            lastParseFail={lastParseFail}
+            sensorData={bt.sensorData}
+            rawDataLog={bt.rawDataLog}
+            lastParseFail={bt.lastParseFail}
             managementValue={managementValue}
             onSaveManagementValue={setManagementValue}
             onDisconnect={handleDisconnect}

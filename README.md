@@ -25,18 +25,18 @@ POSCO 광양 2고로 송풍지관 풍구 감시용 모바일 앱. 블루투스(H
 ### 기술 스택
 
 - Expo SDK 54, React Native, TypeScript
-- expo-router, react-native-bluetooth-classic(SPP)
-- AsyncStorage(관리값 저장), react-native-safe-area-context
+- expo-router, react-native-bluetooth-classic(SPP), react-native-ble-plx(LE, Nordic UART)
+- AsyncStorage(관리값·BLE 등록 기기 저장), react-native-safe-area-context
 
 ### 블루투스
 
-- HC-06 등 **클래식 블루투스(SPP)** 모듈과 통신
-- 모듈은 대기 모드로 두고, 폰 블루투스 설정에서 페어링 후 앱 목록에 표시 → 선택해 연결
+- **클래식(SPP):** HC-06 등 모듈과 통신. 폰 블루투스 설정에서 페어링 후 앱 목록에 표시 → 선택해 연결.
+- **BLE(LE):** Nordic UART Service(NUS) 사용. Central 역할로 스캔 후 연결하고, TX 캐릭터리스틱에 Notification 구독하여 수신. 등록 기기는 AsyncStorage에 저장해 재표시.
 
 ### 빌드
 
 - **개발 빌드(Expo Dev Client):** `npx eas build -p android --profile development`
-- **내부 배포(APK):** `npx eas build -p android --profile preview` 
+- **내부 배포(APK):** `npx eas build -p android --profile preview`
 - **버전:** `app.json`의 `version`(표시용), `android.versionCode`(정수). preview 프로필에 `autoIncrement: true` 설정으로 빌드 시 versionCode 자동 증가.
 
 ## Google Play Store 배포 (AAB)
@@ -106,7 +106,9 @@ npx expo run:android
 
 - `app/(tabs)/index.tsx` — 메인 플로우(스텝별 화면 전환)
 - `screens/` — Splash, DeviceList, Overview, Detail, Dashboard
-- `hooks/useBluetooth.ts` — 블루투스 연결·수신·파싱
+- `hooks/useBluetooth.ts` — 클래식 블루투스 연결·수신·파싱
+- `hooks/useBluetoothLE.ts` — BLE(Nordic UART) 연결·TX 구독·수신·파싱
+- `constants/ble.ts` — BLE 연결 타임아웃 등 설정
 - `hooks/useManagementValue.ts` — 관리값 AsyncStorage
 - `utils/parsePacket.ts` — 수신 패킷 파싱
 - `components/vent-number-ring.tsx` — 풍구 번호 원

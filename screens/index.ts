@@ -1,5 +1,6 @@
 export { DashboardScreen } from './DashboardScreen'
 export { DetailScreen } from './DetailScreen'
 export { DeviceListScreen } from './DeviceListScreen'
+export { ModeSelectScreen } from './ModeSelectScreen'
 export { OverviewScreen } from './OverviewScreen'
 export { SplashScreen } from './SplashScreen'

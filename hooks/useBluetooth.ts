@@ -8,18 +8,20 @@ import RNBluetoothClassic from 'react-native-bluetooth-classic'
 export interface BluetoothDeviceLike {
   name: string
   address: string
-  connect: (opts?: {
+  connect?: (opts?: {
     connectorType?: string
     delimiter?: string
     secureSocket?: boolean
   }) => Promise<boolean>
-  disconnect: () => void
-  onDataReceived: (cb: (data: { data: string }) => void) => void
+  disconnect?: () => void
+  onDataReceived?: (cb: (data: { data: string }) => void) => void
 }
 
 export function useBluetooth() {
   const [deviceList, setDeviceList] = useState<BluetoothDeviceLike[]>([])
-  const [unpairedDevices, setUnpairedDevices] = useState<BluetoothDeviceLike[]>([])
+  const [unpairedDevices, setUnpairedDevices] = useState<BluetoothDeviceLike[]>(
+    [],
+  )
   const [isScanning, setIsScanning] = useState(false)
   const [connectedDevice, setConnectedDevice] =
     useState<BluetoothDeviceLike | null>(null)
@@ -65,7 +67,7 @@ export function useBluetooth() {
       // 3. 검색 시작 (약 12초 후 완료됨)
       // startDiscovery()는 검색이 끝날 때까지 Promise가 대기 상태로 유지됨
       await RNBluetoothClassic.startDiscovery()
-      
+
       // 4. 검색 정상 종료
       console.log('검색 완료')
     } catch (err) {
@@ -87,14 +89,16 @@ export function useBluetooth() {
 
   // 검색된 기기 리스너 설정
   useEffect(() => {
-    const discoverySubscription = RNBluetoothClassic.onDeviceDiscovered((event) => {
-      setUnpairedDevices((prev) => {
-        const exists = prev.find((d) => d.address === event.device.address)
-        if (exists) return prev
-        // BluetoothNativeDevice가 반환되므로 타입 단언 사용
-        return [...prev, event.device as unknown as BluetoothDeviceLike]
-      })
-    })
+    const discoverySubscription = RNBluetoothClassic.onDeviceDiscovered(
+      (event) => {
+        setUnpairedDevices((prev) => {
+          const exists = prev.find((d) => d.address === event.device.address)
+          if (exists) return prev
+          // BluetoothNativeDevice가 반환되므로 타입 단언 사용
+          return [...prev, event.device as unknown as BluetoothDeviceLike]
+        })
+      },
+    )
 
     return () => {
       discoverySubscription.remove()
@@ -145,16 +149,19 @@ export function useBluetooth() {
     if (isScanning) {
       await cancelScan()
     }
-    
+
     setIsConnecting(true)
     try {
       // device 객체에 connect 메서드가 없을 수 있으므로(검색된 기기인 경우)
       // 라이브러리의 connectToDevice를 사용하여 연결하고, 반환된 "완전한" device 객체를 사용함
-      const connectedDeviceObj = await RNBluetoothClassic.connectToDevice(device.address, {
-        connectorType: 'rfcomm',
-        delimiter: '',
-        secureSocket: false,
-      })
+      const connectedDeviceObj = await RNBluetoothClassic.connectToDevice(
+        device.address,
+        {
+          connectorType: 'rfcomm',
+          delimiter: '',
+          secureSocket: false,
+        },
+      )
 
       if (connectedDeviceObj) {
         setConnectedDevice(connectedDeviceObj as unknown as BluetoothDeviceLike)

@@ -45,7 +45,5 @@ export function parsePacket(packet: string): Partial<SensorData> | null {
     }
   }
 
-  // 기존 포맷 (#로 시작) 처리 로직은 제거됨 (사용자 요청)
-
   return null
 }

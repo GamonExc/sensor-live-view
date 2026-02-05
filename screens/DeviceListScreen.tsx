@@ -1,5 +1,4 @@
 import { FONT_FAMILY, FONT_FAMILY_BOLD } from '@/constants/theme'
-import type { BluetoothDeviceLike } from '@/hooks/useBluetooth'
 import React, { useState } from 'react'
 import {
   ActivityIndicator,
@@ -10,13 +9,19 @@ import {
   View,
 } from 'react-native'
 
+/** Classic/LE 공통: 목록 표시 및 선택 시 전달되는 최소 형태 */
+export interface BluetoothDeviceListItem {
+  name: string
+  address: string
+}
+
 export interface DeviceListScreenProps {
-  deviceList: BluetoothDeviceLike[]
-  unpairedDevices: BluetoothDeviceLike[]
+  deviceList: BluetoothDeviceListItem[]
+  unpairedDevices: BluetoothDeviceListItem[]
   isScanning: boolean
   isConnecting: boolean
   onRefresh: () => void
-  onSelectDevice: (device: BluetoothDeviceLike) => void
+  onSelectDevice: (device: BluetoothDeviceListItem) => void
   onDevBypass?: () => void
 }
 
@@ -167,14 +172,6 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY_BOLD,
     fontSize: 16,
   },
-  devBypassBtn: {
-    backgroundColor: '#ff9800',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
-    alignItems: 'center',
-  },
-  devBypassText: { color: '#fff', fontFamily: FONT_FAMILY_BOLD, fontSize: 14 },
   sectionHeader: {
     marginTop: 20,
     marginBottom: 10,
