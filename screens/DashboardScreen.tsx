@@ -30,20 +30,28 @@ export function DashboardScreen({
   onBack,
 }: DashboardScreenProps) {
   const [editValue, setEditValue] = useState<string>(String(managementValue))
+  const [showToast, setShowToast] = useState(false)
 
   useEffect(() => {
     setEditValue(String(managementValue))
   }, [managementValue])
 
-  const handleSaveManagement = () => {
+  const handleSaveManagement = async () => {
     const num = parseInt(editValue, 10)
     if (!Number.isNaN(num) && num >= 0) {
-      onSaveManagementValue(num)
+      await onSaveManagementValue(num)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 1000)
     }
   }
 
   return (
     <View style={styles.container}>
+      {showToast && (
+        <View style={styles.toast}>
+          <Text style={styles.toastText}>저장되었습니다</Text>
+        </View>
+      )}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.managementCard}>
           <Text style={styles.subHeader}>관리값 (°C)</Text>
@@ -61,40 +69,6 @@ export function DashboardScreen({
             현재 저장된 값: {managementValue} °C
           </Text>
         </View>
-        <Text style={styles.header}>실시간 데이터</Text>
-        <View style={styles.card}>
-          <Text>
-            Site ID: <Text style={styles.bold}>{sensorData.siteId}</Text>
-          </Text>
-          <Text>
-            Dev ID: <Text style={styles.bold}>{sensorData.devId}</Text>
-          </Text>
-          <Text>
-            Msg ID: <Text style={styles.bold}>{sensorData.msgId}</Text>
-          </Text>
-          <Text>Time: {sensorData.time}</Text>
-        </View>
-      <View style={styles.card}>
-        <Text style={styles.subHeader}>NTC / LTE / 배터리 / 기타</Text>
-        <Text>
-          NTC 내기: <Text style={styles.bold}>{sensorData.ntcIn}</Text>
-        </Text>
-        <Text>
-          NTC 외기: <Text style={styles.bold}>{sensorData.ntcOut}</Text>
-        </Text>
-        <Text>
-          LTE: <Text style={styles.bold}>{sensorData.lte}</Text>
-        </Text>
-        <Text>
-          배터리: <Text style={styles.bold}>{sensorData.battery}</Text>
-        </Text>
-        <Text>
-          RESETFLAG: <Text style={styles.bold}>{sensorData.resetFlag}</Text>
-        </Text>
-        <Text>
-          COUNT: <Text style={styles.bold}>{sensorData.count}</Text>
-        </Text>
-      </View>
       {lastParseFail && (
         <View style={styles.parseFailCard}>
           <Text style={styles.parseFailTitle}>⚠ 파싱 실패 (마지막 패킷)</Text>
@@ -229,5 +203,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONT_FAMILY,
     color: '#90caf9',
+  },
+  toast: {
+    position: 'absolute',
+    top: '50%',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    zIndex: 100,
+  },
+  toastText: {
+    color: 'white',
+    fontFamily: FONT_FAMILY_BOLD,
+    fontSize: 16,
   },
 })

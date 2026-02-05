@@ -2,18 +2,18 @@
 import { useBluetooth } from '@/hooks/useBluetooth'
 import { useManagementValue } from '@/hooks/useManagementValue'
 import {
-    DashboardScreen,
-    DetailScreen,
-    DeviceListScreen,
-    OverviewScreen,
-    SplashScreen,
+  DashboardScreen,
+  DetailScreen,
+  DeviceListScreen,
+  OverviewScreen,
+  SplashScreen,
 } from '@/screens'
 import type { AppStep } from '@/types/sensor'
 import React, { useEffect, useState } from 'react'
 import { BackHandler, StyleSheet, View } from 'react-native'
 import {
-    SafeAreaProvider,
-    useSafeAreaInsets,
+  SafeAreaProvider,
+  useSafeAreaInsets,
 } from 'react-native-safe-area-context'
 
 function AppContent() {
@@ -25,6 +25,7 @@ function AppContent() {
     deviceList,
     unpairedDevices,
     isScanning,
+    isConnecting,
     sensorData,
     rawDataLog,
     lastParseFail,
@@ -99,6 +100,7 @@ function AppContent() {
             deviceList={deviceList}
             unpairedDevices={unpairedDevices}
             isScanning={isScanning}
+            isConnecting={isConnecting}
             onRefresh={() => {
               getBondedDevices()
               scanDevices()

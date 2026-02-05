@@ -1,9 +1,8 @@
 import { FONT_FAMILY, FONT_FAMILY_BOLD } from '@/constants/theme'
-import type {
-  BluetoothDeviceLike
-} from '@/hooks/useBluetooth'
+import type { BluetoothDeviceLike } from '@/hooks/useBluetooth'
 import React, { useState } from 'react'
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -15,6 +14,7 @@ export interface DeviceListScreenProps {
   deviceList: BluetoothDeviceLike[]
   unpairedDevices: BluetoothDeviceLike[]
   isScanning: boolean
+  isConnecting: boolean
   onRefresh: () => void
   onSelectDevice: (device: BluetoothDeviceLike) => void
   onDevBypass?: () => void
@@ -24,6 +24,7 @@ export function DeviceListScreen({
   deviceList,
   unpairedDevices,
   isScanning,
+  isConnecting,
   onRefresh,
   onSelectDevice,
   onDevBypass,
@@ -31,8 +32,8 @@ export function DeviceListScreen({
   const [headerClickCount, setHeaderClickCount] = useState(0)
 
   const handleHeaderPress = () => {
-    // 개발 모드이고 onDevBypass가 있을 때만 동작
-    if (typeof __DEV__ !== 'undefined' && __DEV__ && onDevBypass) {
+    // onDevBypass가 있을 때만 동작 (배포 버전에서도 7번 터치 시 이동 가능)
+    if (onDevBypass) {
       const next = headerClickCount + 1
       setHeaderClickCount(next)
       if (next >= 7) {
@@ -48,11 +49,14 @@ export function DeviceListScreen({
         <Text style={styles.header}>기기 선택</Text>
       </TouchableOpacity>
       <Text style={styles.desc}>블루투스 기기를 선택하여 연결하세요.</Text>
-      
-      <TouchableOpacity 
-        style={[styles.refreshBtn, isScanning && styles.scanningBtn]} 
+
+      <TouchableOpacity
+        style={[
+          styles.refreshBtn,
+          (isScanning || isConnecting) && styles.scanningBtn,
+        ]}
         onPress={onRefresh}
-        disabled={isScanning}
+        disabled={isScanning || isConnecting}
       >
         <Text style={styles.refreshBtnText}>
           {isScanning ? '검색 중...' : '기기 검색 (새로고침)'}
@@ -62,6 +66,7 @@ export function DeviceListScreen({
       <FlatList
         data={[]}
         renderItem={null}
+        scrollEnabled={!isConnecting}
         ListHeaderComponent={
           <>
             <View style={styles.sectionHeader}>
@@ -76,8 +81,11 @@ export function DeviceListScreen({
                   style={styles.item}
                   onPress={() => onSelectDevice(item)}
                   activeOpacity={0.8}
+                  disabled={isConnecting}
                 >
-                  <Text style={styles.itemName}>{item.name || '알 수 없는 기기'}</Text>
+                  <Text style={styles.itemName}>
+                    {item.name || '알 수 없는 기기'}
+                  </Text>
                   <Text style={styles.itemAddress}>{item.address}</Text>
                 </TouchableOpacity>
               ))
@@ -97,8 +105,11 @@ export function DeviceListScreen({
                   style={[styles.item, styles.unpairedItem]}
                   onPress={() => onSelectDevice(item)}
                   activeOpacity={0.8}
+                  disabled={isConnecting}
                 >
-                  <Text style={styles.itemName}>{item.name || '알 수 없는 기기'}</Text>
+                  <Text style={styles.itemName}>
+                    {item.name || '알 수 없는 기기'}
+                  </Text>
                   <Text style={styles.itemAddress}>{item.address}</Text>
                 </TouchableOpacity>
               ))
@@ -107,6 +118,14 @@ export function DeviceListScreen({
           </>
         }
       />
+
+      {isConnecting && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#00A5E5" />
+          <Text style={styles.loadingText}>기기에 연결하는 중입니다...</Text>
+          <Text style={styles.loadingSubText}>잠시만 기다려 주세요.</Text>
+        </View>
+      )}
     </View>
   )
 }
@@ -197,5 +216,24 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     marginBottom: 10,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(4, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 18,
+    fontFamily: FONT_FAMILY_BOLD,
+    color: '#ffffff',
+  },
+  loadingSubText: {
+    marginTop: 8,
+    fontSize: 14,
+    fontFamily: FONT_FAMILY,
+    color: '#90caf9',
   },
 })
